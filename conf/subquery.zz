@@ -16,7 +16,8 @@
 # USA
 
 $tables = {
-        rows => [30, 50, 100, 0],
+        names => ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z', 'AA', 'BB', 'CC', 'DD', 'EE', 'FF', 'GG', 'HH', 'II', 'JJ', 'KK', 'LL', 'MM', 'NN', 'OO', 'PP'],
+        rows => [20, 1000, 52, 30, 50, 100, 0],
         partitions => [ undef ]
         #charsets => [binary],
 	#collations => [binary]

@@ -1,0 +1,15 @@
+quick steps:
+step 1: config the randgen.sh and run.sh
+step 2: nohup ./randgen.sh &
+
+
+raw steps:
+step 1: chagne the zz and yy files in randgen-2.2.0/conf/
+step 2: generate data and SQL file: e.g.:
+	./gen_test.py --port 4002 --database $db_name  --count 100 randgen-2.2.0/conf/outer_join_hash.zz randgen-2.2.0/conf/outer_join_hash.yy 
+	./gen_test.py --port 3306 --database $db_name  --count 100 randgen-2.2.0/conf/outer_join_hash.zz randgen-2.2.0/conf/outer_join_hash.yy 
+
+step 3: nohup ./run.sh $db_name &
+
+step 4: ./analyze_dump.sh; input the output and dump directories
+

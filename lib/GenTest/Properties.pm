@@ -165,10 +165,10 @@ sub new {
     
     my $message;
     $message .= "The following properties are not legal: ".
-        join(", ", map {"'--".$_."'"} sort @illegal). ". " if defined @illegal;
+        join(", ", map {"'--".$_."'"} sort @illegal). ". " if @illegal;
 
     $message .= "The following required properties  are missing: ".
-        join(", ", map {"'--".$_."'"} sort @missing). ". " if defined @missing;
+        join(", ", map {"'--".$_."'"} sort @missing). ". " if  @missing;
 
     if (defined $message) {
         $props->_help();
