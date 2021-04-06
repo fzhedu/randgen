@@ -41,7 +41,8 @@ query:
   { @nonaggregates = () ; $tables = 0 ; $fields = 0 ;  "" } query_type ;
 
 query_type:
-  simple_select | simple_select | mixed_select | mixed_select | mixed_select | aggregate_select ;
+ # simple_select | simple_select | 
+	mixed_select | mixed_select | mixed_select | aggregate_select ;
 
 mixed_select:
         { $stack->push() } SELECT select_option  distinct straight_join select_list FROM join WHERE where_list group_by_clause having_clause order_by_clause { $stack->pop(undef) } ;
@@ -52,15 +53,15 @@ simple_select:
 aggregate_select:
         { $stack->push() } SELECT select_option distinct straight_join aggregate_select_list FROM join WHERE where_list optional_group_by having_clause order_by_clause { $stack->pop(undef) } ;
 
-distinct: DISTINCT | | | |  ;
+distinct: DISTINCT;
 
-select_option:  /*+tidb_hj(table1,table2,table3,table4,table5,table6,table7,table8,table9,table10,table11,table12)*/  ;
+select_option:  ;
+#/*+tidb_hj(table1,table2,table3,table4,table5,table6,table7,table8,table9,table10,table11,table12)*/  ;
 
 straight_join:  | | | | | | | | | | | STRAIGHT_JOIN ;
 
 select_list:
-	new_select_item |
-	new_select_item , select_list |
+	new_select_item , aggregate_select_item |
         new_select_item , select_list ;
 
 simple_select_list:
@@ -69,14 +70,10 @@ simple_select_list:
         nonaggregate_select_item , simple_select_list ;
 
 aggregate_select_list:
-        aggregate_select_item | aggregate_select_item |
+        aggregate_select_item , aggregate_select_item |
         aggregate_select_item, aggregate_select_list ;
 
 new_select_item:
-        nonaggregate_select_item |
-        nonaggregate_select_item |        
-        nonaggregate_select_item |
-        nonaggregate_select_item |        
         nonaggregate_select_item |
 	aggregate_select_item ;
 
@@ -84,7 +81,8 @@ nonaggregate_select_item:
         table_alias . int_field_name AS { my $f = "field".++$fields ; push @nonaggregates , $f ; $f } ;
 
 aggregate_select_item:
-        aggregate table_alias . int_field_name ) AS {"field".++$fields } ; 
+        aggregate table_alias . int_field_name ) AS {"field".++$fields } |
+	non_num_aggregate table_alias . non_num_field_name ) AS {"field".++$fields }; 
 	
 join:
        { $stack->push() }      
@@ -95,7 +93,7 @@ join:
        join_condition ;
 
 join_condition:
-   int_condition | char_condition ;
+   int_condition | char_condition | num_condition | date_condition;
 
 int_condition: 
    { my $left = $stack->get("left"); my %s=map{$_=>1} @$left; my @r=(keys %s); my $table_string = $prng->arrayElement(\@r); my @table_array = split(/AS/, $table_string); $table_array[1] } . int_indexed = 
@@ -124,6 +122,17 @@ char_condition:
    { my $right = $stack->get("result"); my %s=map{$_=>1} @$right; my @r=(keys %s); my $table_string = $prng->arrayElement(\@r); my @table_array = split(/AS/, $table_string); $table_array[1] } . char_indexed 
    { my $left = $stack->get("left");  my $right = $stack->get("result"); my @n = (); push(@n,@$right); push(@n,@$left); $stack->pop(\@n); return undef } ;
 
+num_condition:
+   { my $left = $stack->get("left"); my %s=map{$_=>1} @$left; my @r=(keys %s); my $table_string = $prng->arrayElement(\@r); my @table_array = split(/AS/, $table_string); $table_array[1] } . num_field_name =
+   { my $right = $stack->get("result"); my %s=map{$_=>1} @$right; my @r=(keys %s); my $table_string = $prng->arrayElement(\@r); my @table_array = split(/AS/, $table_string); $table_array[1] } . num_field_name
+   { my $left = $stack->get("left");  my $right = $stack->get("result"); my @n = (); push(@n,@$right); push(@n,@$left); $stack->pop(\@n); return undef } ;
+
+date_condition:
+   { my $left = $stack->get("left"); my %s=map{$_=>1} @$left; my @r=(keys %s); my $table_string = $prng->arrayElement(\@r); my @table_array = split(/AS/, $table_string); $table_array[1] } . date_field_name =
+   { my $right = $stack->get("result"); my %s=map{$_=>1} @$right; my @r=(keys %s); my $table_string = $prng->arrayElement(\@r); my @table_array = split(/AS/, $table_string); $table_array[1] } . date_field_name
+   { my $left = $stack->get("left");  my $right = $stack->get("result"); my @n = (); push(@n,@$right); push(@n,@$left); $stack->pop(\@n); return undef } ;
+
+
 where_list:
         where_item | where_item |
         ( where_list and_or where_item ) ;
@@ -134,6 +143,9 @@ where_item:
 	existing_table_item . int_field_name comparison_operator _digit  |
         existing_table_item . int_field_name comparison_operator existing_table_item . int_field_name |
         existing_table_item . int_field_name IS not NULL |
+        existing_table_item . num_field_name IS not NULL |
+        existing_table_item . num_field_name IS NULL |
+        existing_table_item . int_field_name IS NULL |
         existing_table_item . int_field_name not IN (number_list) |
         existing_table_item . int_field_name  not BETWEEN _digit[invariant] AND ( _digit[invariant] + _digit );
 
@@ -149,7 +161,7 @@ group_by_clause:
 	{ scalar(@nonaggregates) > 0 ? " GROUP BY ".join (', ' , @nonaggregates ) : "" }  ;
 
 optional_group_by:
-        | | | | | | | | group_by_clause ;
+        group_by_clause ;
 
 having_clause:
 	| HAVING having_list;
@@ -211,26 +223,26 @@ table:
        { $stack->push(); my $x = $prng->arrayElement($executors->[0]->tables())." AS table".++$tables;  my @s=($x); $stack->pop(\@s); $x } ;
 
 int_field_name:
-`col_decimal` | `col_decimal_30_10` | `col_decimal_30_10_not_null` | `col_decimal_not_null_key` | `col_decimal_key` | `col_decimal_40_not_null_key` | `col_decimal_40_key` | `col_decimal_40` | `pk` | `col_int_key` | `col_int` | `col_int_not_null` | `col_int_not_null_key` ;
+	`col_tinyint` | `col_bigint`  | `col_decimal` | `col_decimal_30_10` | `col_decimal_30_10_not_null` | `col_decimal_not_null_key` | `col_decimal_key` | `col_decimal_40_not_null_key` | `col_decimal_40_key` | `col_decimal_40` | `pk` | `col_int_key` | `col_int` | `col_int_not_null` | `col_int_not_null_key` | `col_tinyint_not_null` | `col_bigint_not_null`;
 #  `pk` | `col_int` | `col_int` ;
 
+num_field_name:
+	int_field_name | `col_double` | `col_float` | `col_double_not_null` | `col_float_not_null`;
+
 int_indexed:
-   `pk` | `col_int` ;
+   `pk` | `col_int_key` | `col_decimal_key` | `col_decimal_40_key` | `col_decimal_30_10_key`;
 
 char_field_name:
-  `col_varchar_10_utf8` | 
-  `col_varchar_10_latin1`| 
-  `col_varchar_1024_utf8` | 
-  `col_varchar_1024_utf8` | 
-  `col_varchar_1024_latin1` | 
-  `col_varchar_10_utf8` | 
-  `col_varchar_1024_latin1` | 
-  `col_varchar_10_latin1` ; 
+  `col_varchar_64` | `col_char_64` | `col_varchar_64_not_null`| `col_char_64_not_null` ; 
 
 char_indexed:
-  `col_varchar_10_latin1` | `col_varchar_10_utf8` |
-  `col_varchar_1024_latin1` |`col_varchar_1024_utf8` ;
+  `col_varchar_10_key` | `col_varchar_64_key` ;
 
+date_field_name:
+   `col_date` | `col_datetime` | `col_date_not_null` | `col_datetime_not_null` | `col_date_key` | `col_datetime_key`;
+
+non_num_field_name:
+	char_field_name | date_field_name;
 
 table_alias:
   table1 | table1 | table1 | table1 | table1 | table1 | table1 | table1 | table1 | table1 |
@@ -257,7 +269,10 @@ comparison_operator:
 	= | > | < | != | <> | <= | >= ;
 
 aggregate:
-	COUNT( distinct | SUM( distinct | MIN( distinct | MAX( distinct ;
+    avg( distinct | COUNT( distinct | SUM( distinct | MIN( distinct | MAX( distinct | count( | sum( | min( | max( | avg(;
+
+non_num_aggregate:
+	COUNT( distinct | count( | MIN( distinct | MAX( distinct | min( | max( ;
 
 not:
 	| | | NOT;

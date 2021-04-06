@@ -59,6 +59,7 @@ main_select:
 #        | simple_select | simple_select | simple_select |
 #        mixed_select |  mixed_select |  mixed_select |  mixed_select  | 
 #        aggregate_select ;
+       aggregate_select ;
 
 mixed_select:
 	explain_extended SELECT distinct straight_join select_option select_list
