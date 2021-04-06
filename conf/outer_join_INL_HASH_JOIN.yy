@@ -44,13 +44,13 @@ query_type:
   simple_select | simple_select | mixed_select | mixed_select | mixed_select | aggregate_select ;
 
 mixed_select:
-        { $stack->push() } SELECT select_option distinct straight_join  select_list FROM join WHERE where_list group_by_clause having_clause order_by_clause { $stack->pop(undef) } ;
+        { $stack->push() } SELECT distinct straight_join select_option select_list FROM join WHERE where_list group_by_clause having_clause order_by_clause { $stack->pop(undef) } ;
 
 simple_select:
-        { $stack->push() } SELECT select_option distinct straight_join simple_select_list FROM join WHERE where_list  optional_group_by having_clause order_by_clause { $stack->pop(undef) } ;
+        { $stack->push() } SELECT distinct straight_join select_option simple_select_list FROM join WHERE where_list  optional_group_by having_clause order_by_clause { $stack->pop(undef) } ;
 
 aggregate_select:
-        { $stack->push() } SELECT select_option distinct straight_join aggregate_select_list FROM join WHERE where_list optional_group_by having_clause order_by_clause { $stack->pop(undef) } ;
+        { $stack->push() } SELECT distinct straight_join select_option aggregate_select_list FROM join WHERE where_list optional_group_by having_clause order_by_clause { $stack->pop(undef) } ;
 
 distinct: DISTINCT | | | |  ;
 
