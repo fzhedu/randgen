@@ -22,7 +22,7 @@ $tables = {
 };
 
 $fields = {
-	types => [ 'tinyint','int', 'bigint', 'varchar(10)', 'decimal', 'char(64)', 'varchar(64)', 'decimal(40)', 'decimal(30,10)', 'date', 'datetime', 'time', 'double', 'float' ],
+	types => [ 'tinyint','int', 'char' , 'varchar', 'bigint', 'varchar(10)', 'decimal', 'char(64)', 'varchar(64)', 'decimal(40)', 'decimal(30,10)', 'date', 'datetime', 'time', 'double', 'float' ],
         indexes => [ undef, 'key' ],
         null => [ undef, 'not null' ]
 };

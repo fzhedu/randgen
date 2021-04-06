@@ -89,7 +89,7 @@ aggregate_select:
         explain_extended SELECT distinct straight_join select_option aggregate_select_list
         FROM join_list
         where_clause
-        optional_group_by
+        group_by_clause
         having_clause
         order_by_clause ;
 
@@ -126,8 +126,8 @@ join_list:
 # this limits us to 2 and 3 table joins / can use it if we hit                 #
 # too many mega-join conditions which take too long to run                     #
 ################################################################################
-	( new_table_item join_type new_table_item ON (join_condition_item ) ) |
-        ( new_table_item join_type ( ( new_table_item join_type new_table_item ON (join_condition_item ) ) ) ON (join_condition_item ) ) ;
+	 new_table_item join_type new_table_item ON (join_condition_item )  |
+         new_table_item join_type  new_table_item join_type new_table_item ON (join_condition_item ) ON (join_condition_item )  ;
 
 join_list_disabled:
 ################################################################################
@@ -138,16 +138,16 @@ join_list_disabled:
 ################################################################################
 
         new_table_item |
-        ( new_table_item join_type join_list ON (join_condition_item ) ) ;
+         new_table_item join_type join_list ON (join_condition_item )  ;
 
 join_type:
-	INNER JOIN | left_right outer JOIN | STRAIGHT_JOIN ;  
+	INNER JOIN | left_right outer JOIN  ;  
 
 join_condition_item:
     current_table_item . int_indexed = previous_table_item . int_field_name on_subquery |
     current_table_item . int_field_name = previous_table_item . int_indexed on_subquery |
-    current_table_item . `col_varchar_binary_key` = previous_table_item . char_field_name on_subquery |
-    current_table_item . char_field_name = previous_table_item . `col_varchar_binary_key` on_subquery ;
+    current_table_item . `col_varchar_key` = previous_table_item . char_field_name on_subquery |
+    current_table_item . char_field_name = previous_table_item . `col_varchar_key` on_subquery ;
 
 on_subquery:
 #    |||||||||||||||||||| { $subquery_idx += 1 ; $subquery_tables=0 ; ""} and_or general_subquery ;
@@ -160,7 +160,7 @@ outer:
 	| OUTER ;
 
 where_clause:
-         WHERE ( where_subquery ) and_or where_list ;
+         WHERE  where_subquery  and_or where_list ;
 
 
 where_list:
@@ -233,9 +233,9 @@ int_single_value_subquery:
     ( SELECT _digit FROM DUAL ) ;
 
 char_single_value_subquery:
-    ( SELECT distinct select_option aggregate subquery_table_one_two . char_field_name ) AS { "SUBQUERY".$subquery_idx."_field1" } 
+    ( SELECT distinct select_option non_num_aggregate subquery_table_one_two . char_field_name ) AS { "SUBQUERY".$subquery_idx."_field1" } 
       subquery_body ) |
-    ( SELECT distinct select_option aggregate subquery_table_one_two . char_field_name ) AS { "SUBQUERY".$subquery_idx."_field1" } 
+    ( SELECT distinct select_option non_num_aggregate subquery_table_one_two . char_field_name ) AS { "SUBQUERY".$subquery_idx."_field1" } 
       subquery_body ) |
     ( SELECT _char FROM DUAL ) ;
    
@@ -284,14 +284,14 @@ char_double_member_subquery:
      double_subquery_group_by
      subquery_having ) |
    ( SELECT distinct select_option subquery_table_one_two . char_field_name AS { "SUBQUERY".$subquery_idx."_field1" } ,
-     aggregate subquery_table_one_two . char_field_name ) AS { SUBQUERY.$subquery_idx."_field2" }
+     non_num_aggregate subquery_table_one_two . char_field_name ) AS { SUBQUERY.$subquery_idx."_field2" }
      subquery_body
      single_subquery_group_by
      subquery_having ) |
    (  SELECT _char , _char  UNION all_distinct  SELECT _char , _char  ) ;
 
 int_correlated_subquery:
-    ( SELECT distinct select_option subquery_table_one_two . int_field_name AS { "SUBQUERY".$subquery_idx."_field1" }
+     ( SELECT distinct select_option subquery_table_one_two . int_field_name AS { "SUBQUERY".$subquery_idx."_field1" }
       FROM subquery_join_list 
       correlated_subquery_where_clause ) ;
 
@@ -302,7 +302,7 @@ char_correlated_subquery:
 
 int_scalar_correlated_subquery:
      ( SELECT distinct select_option aggregate subquery_table_one_two . int_field_name ) AS { "SUBQUERY".$subquery_idx."_field1" }
-      FROM subquery_join_list 
+
       correlated_subquery_where_clause ) ;
 
 subquery_body:
@@ -336,30 +336,30 @@ subquery_where_item:
    child_subquery ;
 
 subquery_join_list:
-    subquery_new_table_item  |  subquery_new_table_item  |
-   ( subquery_new_table_item join_type subquery_new_table_item ON (subquery_join_condition_item ) ) |
-   ( subquery_new_table_item join_type subquery_new_table_item ON (subquery_join_condition_item ) ) |
-   ( subquery_new_table_item join_type ( subquery_new_table_item join_type subquery_new_table_item ON (subquery_join_condition_item )  ) ON (subquery_join_condition_item ) ) ;
+#    subquery_new_table_item  |  subquery_new_table_item  |
+    subquery_new_table_item join_type subquery_new_table_item ON (subquery_join_condition_item )  |
+    subquery_new_table_item join_type subquery_new_table_item ON (subquery_join_condition_item )  |
+    subquery_new_table_item join_type ( subquery_new_table_item join_type subquery_new_table_item ON (subquery_join_condition_item )) ON (subquery_join_condition_item )  ;
 
 subquery_join_condition_item:
     subquery_current_table_item . int_field_name = subquery_previous_table_item . int_indexed subquery_on_subquery |
     subquery_current_table_item . int_indexed = subquery_previous_table_item . int_field_name subquery_on_subquery |
-    subquery_current_table_item . `col_varchar_binary_key` = subquery_previous_table_item . char_field_name subquery_on_subquery |
-    subquery_current_table_item . char_field_name = subquery_previous_table_item . `col_varchar_binary_key` subquery_on_subquery ;
+    subquery_current_table_item . `col_varchar_key` = subquery_previous_table_item . char_field_name subquery_on_subquery |
+    subquery_current_table_item . char_field_name = subquery_previous_table_item . `col_varchar_key` subquery_on_subquery ;
 
 subquery_on_subquery:
 #    |||||||||||||||||||| { $child_subquery_idx += 1 ; $child_subquery_tables=0 ; ""} and_or general_child_subquery ;
 ;
 
 single_subquery_group_by:
-    | | | | | | | | | GROUP BY { SUBQUERY.$subquery_idx."_field1" } ;
+    GROUP BY { SUBQUERY.$subquery_idx."_field1" } ;
 
 
 double_subquery_group_by:
-    | | | | | | | | | GROUP BY { SUBQUERY.$subquery_idx."_field1" } ,  { SUBQUERY.$subquery_idx."_field2" } ;
+    GROUP BY { SUBQUERY.$subquery_idx."_field1" } ,  { SUBQUERY.$subquery_idx."_field2" } ;
 
-subquery_having:
-    | | | | | | | | | | HAVING subquery_having_list ;
+subquery_having: ;
+   # | | | | | | | | | | HAVING subquery_having_list ;
 
 subquery_having_list:
         subquery_having_item |
@@ -408,7 +408,7 @@ int_single_value_child_subquery:
       child_subquery_body ) ;
 
 char_single_value_child_subquery:
-    ( SELECT distinct select_option aggregate child_subquery_table_one_two . char_field_name ) AS { "CHILD_SUBQUERY".$child_subquery_idx."_field1" } 
+    ( SELECT distinct select_option non_num_aggregate child_subquery_table_one_two . char_field_name ) AS { "CHILD_SUBQUERY".$child_subquery_idx."_field1" } 
       child_subquery_body ) ;
    
 int_single_member_child_subquery:
@@ -448,7 +448,7 @@ char_double_member_child_subquery:
      double_child_subquery_group_by
      child_subquery_having ) |
    ( SELECT distinct select_option child_subquery_table_one_two . char_field_name AS { "CHILD_SUBQUERY".$child_subquery_idx."_field1" } ,
-     aggregate child_subquery_table_one_two . char_field_name ) AS { "CHILD_SUBQUERY".$child_subquery_idx."_field2" }
+     non_num_aggregate child_subquery_table_one_two . char_field_name ) AS { "CHILD_SUBQUERY".$child_subquery_idx."_field2" }
      child_subquery_body
      single_child_subquery_group_by
      child_subquery_having );
@@ -490,30 +490,30 @@ child_subquery_where_item:
    existing_child_subquery_table_item . int_field_name arithmetic_operator _digit |
    existing_child_subquery_table_item . char_field_name arithmetic_operator _char |
    existing_child_subquery_table_item . int_field_name arithmetic_operator existing_child_subquery_table_item . int_field_name |
-   existing_child_subquery_table_item . char_field_name arithmetic_operator existing_child_subquery_table_item . char_field_name |
-   child_child_subquery ;
+   existing_child_subquery_table_item . char_field_name arithmetic_operator existing_child_subquery_table_item . char_field_name ;
+  # child_subquery ;
 
 child_subquery_join_list:
-    child_subquery_new_table_item  |  child_subquery_new_table_item  |
-   ( child_subquery_new_table_item join_type child_subquery_new_table_item ON (child_subquery_join_condition_item ) ) |
-   ( child_subquery_new_table_item join_type child_subquery_new_table_item ON (child_subquery_join_condition_item ) ) |
-   ( child_subquery_new_table_item join_type ( ( child_subquery_new_table_item join_type child_subquery_new_table_item ON (child_subquery_join_condition_item ) ) ) ON (child_subquery_join_condition_item ) ) ;
+#    child_subquery_new_table_item  |  child_subquery_new_table_item  |
+    child_subquery_new_table_item join_type child_subquery_new_table_item ON (child_subquery_join_condition_item ) |
+    child_subquery_new_table_item join_type child_subquery_new_table_item ON (child_subquery_join_condition_item ) |
+    child_subquery_new_table_item join_type ( child_subquery_new_table_item join_type child_subquery_new_table_item ON (child_subquery_join_condition_item )) ON (child_subquery_join_condition_item ) ;
 
 child_subquery_join_condition_item:
     child_subquery_current_table_item . int_field_name = child_subquery_previous_table_item . int_indexed |
     child_subquery_current_table_item . int_indexed = child_subquery_previous_table_item . int_field_name |
-    child_subquery_current_table_item . `col_varchar_binary_key` = child_subquery_previous_table_item . char_field_name |
-    child_subquery_current_table_item . char_field_name = child_subquery_previous_table_item . `col_varchar_binary_key` ;
+    child_subquery_current_table_item . `col_varchar_key` = child_subquery_previous_table_item . char_field_name |
+    child_subquery_current_table_item . char_field_name = child_subquery_previous_table_item . `col_varchar_key` ;
 
 single_child_subquery_group_by:
-    | | | | | | | | | GROUP BY { child_subquery.$child_subquery_idx."_field1" } ;
+    GROUP BY { child_subquery.$child_subquery_idx."_field1" } ;
 
 
 double_child_subquery_group_by:
-    | | | | | | | | | GROUP BY { child_subquery.$child_subquery_idx."_field1" } ,  { child_subquery.$child_subquery_idx."_field2" } ;
+    GROUP BY { child_subquery.$child_subquery_idx."_field1" } ,  { child_subquery.$child_subquery_idx."_field2" } ;
 
-child_subquery_having:
-    | | | | | | | | | | HAVING child_subquery_having_list ;
+child_subquery_having: ;
+#    | | | | | | | | | | HAVING child_subquery_having_list ;
 
 child_subquery_having_list:
         child_subquery_having_item |
@@ -538,9 +538,9 @@ range_predicate1_list:
 
 range_predicate1_item:
          table1 . int_indexed not BETWEEN _tinyint_unsigned[invariant] AND ( _tinyint_unsigned[invariant] + _tinyint_unsigned ) |
-         table1 . `col_varchar_binary_key` arithmetic_operator _char[invariant]  |
+         table1 . `col_varchar_key` arithmetic_operator _char[invariant]  |
          table1 . int_indexed not IN (number_list) |
-         table1 . `col_varchar_binary_key` not IN (char_list) |
+         table1 . `col_varchar_key` not IN (char_list) |
          table1 . `pk` > _tinyint_unsigned[invariant] AND table1 . `pk` < ( _tinyint_unsigned[invariant] + _tinyint_unsigned ) |
          table1 . `col_int_key` > _tinyint_unsigned[invariant] AND table1 . `col_int_key` < ( _tinyint_unsigned[invariant] + _tinyint_unsigned ) ;
 
@@ -558,11 +558,11 @@ range_predicate2_list:
 range_predicate2_item:
         table1 . `pk` = _tinyint_unsigned |
         table1 . `col_int_key` = _tinyint_unsigned |
-        table1 . `col_varchar_binary_key` = _char |
+        table1 . `col_varchar_key` = _char |
         table1 . int_indexed = _tinyint_unsigned |
-        table1 . `col_varchar_binary_key` = _char |
+        table1 . `col_varchar_key` = _char |
         table1 . int_indexed = existing_table_item . int_indexed |
-        table1 . `col_varchar_binary_key` = existing_table_item . `col_varchar_binary_key` ;
+        table1 . `col_varchar_key` = existing_table_item . `col_varchar_key` ;
 
 ################################################################################
 # The number and char_list rules are for creating WHERE conditions that test   #
@@ -690,8 +690,14 @@ child_subquery_table_one_two:
         { "CHILD_SUBQUERY".$child_subquery_idx."_t1" ;  } | { "CHILD_SUBQUERY".$child_subquery_idx."_t1" ;  } |
         { "CHILD_SUBQUERY".$child_subquery_idx."_t1" ;  } | { "CHILD_SUBQUERY".$child_subquery_idx."_t2" ;  } ;
 
+#aggregate:
+#	COUNT( distinct | SUM( distinct | MIN( distinct | MAX( distinct ;
+
 aggregate:
-	COUNT( distinct | SUM( distinct | MIN( distinct | MAX( distinct ;
+    avg( distinct | COUNT( distinct | SUM( distinct | MIN( distinct | MAX( distinct | count( | sum( | min( | max( | avg(;
+
+non_num_aggregate:
+        COUNT( distinct | count( | MIN( distinct | MAX( distinct | min( | max( ;
 
 ################################################################################
 # The following rules are for writing more sensible queries - that we don't    #
@@ -800,17 +806,37 @@ view:
 #_digit:
 #    1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | _tinyint_unsigned ;
 
-int_field_name:
-     `col_decimal` | `col_decimal_30_10` | `col_decimal_30_10_not_null` | `col_decimal_not_null_key` | `col_decimal_key` | `col_decimal_40_not_null_key` | `col_decimal_40_key` | `col_decimal_40` | `pk` | `col_int_key` | `col_int` | `col_int_not_null` | `col_int_not_null_key` ;
+#int_field_name:
 #    `pk` | `col_int_key` | `col_int` | `col_int_not_null` | `col_int_not_null_key` ;
 
-int_indexed:
-    `pk` | `col_int_key` ;
+#int_indexed:
+#    `pk` | `col_int_key` ;
 
+#char_field_name:
+ #   `col_varchar_key` | `col_varchar_binary` | `col_varchar_not_null` | `col_varchar_not_null_key` ;
+
+
+int_field_name:
+        `col_tinyint` | `col_bigint`  | `col_decimal` | `col_decimal_30_10` | `col_decimal_30_10_not_null` | `col_decimal_not_null_key` | `col_decimal_key` | `col_decimal_40_not_null_key` | `col_decimal_40_key` | `col_decimal_40` | `pk` | `col_int_key` | `col_int` | `col_int_not_null` | `col_int_not_null_key` | `col_tinyint_not_null` | `col_bigint_not_null`;
+#  `pk` | `col_int` | `col_int` ;
+
+num_field_name:
+        int_field_name | `col_double` | `col_float` | `col_double_not_null` | `col_float_not_null`;
+
+int_indexed:
+   `pk` | `col_int_key` | `col_decimal_key` | `col_decimal_40_key` | `col_decimal_30_10_key`;
 
 char_field_name:
-    `col_varchar_binary_key` | `col_varchar_binary` | `col_varchar_binary_not_null` | `col_varchar_binary_not_null_key` ;
+  `col_varchar_64` | `col_char_64` | `col_varchar_64_not_null`| `col_char_64_not_null` ;
 
+char_indexed:
+  `col_varchar_10_key` | `col_varchar_64_key` ;
+
+date_field_name:
+   `col_date` | `col_datetime` | `col_date_not_null` | `col_datetime_not_null` | `col_date_key` | `col_datetime_key`;
+
+non_num_field_name:
+        char_field_name | date_field_name;
 ################################################################################
 # We define LIMIT_rows in this fashion as LIMIT values can differ depending on      #
 # how large the LIMIT is - LIMIT 2 = LIMIT 9 != LIMIT 19                       #
