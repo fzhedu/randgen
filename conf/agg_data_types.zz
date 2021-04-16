@@ -16,13 +16,13 @@
 # USA
 
 $tables = {
-        names => ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P'],
-        rows => [100, 1, 2, 5, 67, 70, 0, 9, 100, 20, 21, 22, 500, 200, 50],
-        engines => ['MyISAM', 'Innodb' ]
+        names => ['A','B','C','D','E','F','AA','BB','CC','DD'],
+        rows => [100, 1, 2, 5, 67, 70, 0, 9, 100, 500],
+#        engines => ['MyISAM', 'Innodb' ]
 };
 
 $fields = {
-        types => [ 'tinyint', 'bigint', 'double', 'decimal', 'char(64)', 'varchar(64)', 'decimal(40)', 'decimal(30,10)', 'date', 'datetime', 'time', 'year' ],
+        types => [ 'tinyint', 'bigint', 'int', 'float', 'double', 'decimal', 'decimal(40)', 'decimal(30,10)', 'char(64)', 'varchar(64)', 'date', 'datetime', 'time', 'year' ],
         indexes => [ undef, 'key' ],
         null => [ undef, 'not null' ],
         sign => [ undef, 'unsigned' ],

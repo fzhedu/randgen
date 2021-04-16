@@ -806,19 +806,8 @@ view:
 #_digit:
 #    1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | _tinyint_unsigned ;
 
-#int_field_name:
-#    `pk` | `col_int_key` | `col_int` | `col_int_not_null` | `col_int_not_null_key` ;
-
-#int_indexed:
-#    `pk` | `col_int_key` ;
-
-#char_field_name:
- #   `col_varchar_key` | `col_varchar_binary` | `col_varchar_not_null` | `col_varchar_not_null_key` ;
-
-
 int_field_name:
         `col_tinyint` | `col_bigint`  | `col_decimal` | `col_decimal_30_10` | `col_decimal_30_10_not_null` | `col_decimal_not_null_key` | `col_decimal_key` | `col_decimal_40_not_null_key` | `col_decimal_40_key` | `col_decimal_40` | `pk` | `col_int_key` | `col_int` | `col_int_not_null` | `col_int_not_null_key` | `col_tinyint_not_null` | `col_bigint_not_null`;
-#  `pk` | `col_int` | `col_int` ;
 
 num_field_name:
         int_field_name | `col_double` | `col_float` | `col_double_not_null` | `col_float_not_null`;
