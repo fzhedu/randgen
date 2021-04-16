@@ -55,10 +55,8 @@ query:
 	{ @nonaggregates = () ; $tables = 0 ; $fields = 0 ; $subquery_idx=0 ; $child_subquery_idx=0 ; "" } main_select ;
 
 main_select:
-        subquery_select; 
-#        | simple_select | simple_select | simple_select |
-#        mixed_select |  mixed_select |  mixed_select |  mixed_select  | 
-#        aggregate_select ;
+        subquery_select ;
+#| mixed_select | aggregate_select ;
 
 mixed_select:
 	explain_extended SELECT distinct straight_join select_option select_list
@@ -92,7 +90,7 @@ aggregate_select:
         having_clause
         order_by_clause ;
 
-explain_extended: ;
+explain_extended:;
 #    | | | | | | | | | explain_extended2 ;
 
 explain_extended2: | | | | EXPLAIN | EXPLAIN EXTENDED ; 
@@ -690,7 +688,7 @@ child_subquery_table_one_two:
         { "CHILD_SUBQUERY".$child_subquery_idx."_t1" ;  } | { "CHILD_SUBQUERY".$child_subquery_idx."_t2" ;  } ;
 
 aggregate:
-	COUNT( distinct | SUM( distinct | MIN( distinct | MAX( distinct ;
+	AVG( | AVG( distinct | count( | sum( | max( | min( | COUNT( distinct | SUM( distinct | MIN( distinct | MAX( distinct ;
 
 ################################################################################
 # The following rules are for writing more sensible queries - that we don't    #
@@ -777,8 +775,8 @@ all_distinct:
 
 	
 value:
-	_digit | _digit | _digit | _digit | _tinyint_unsigned|
-        _char(2) | _char(2) | _char(2) | _char(2) | _char(2) ;
+	_digit | _digit | _digit | _digit | _tinyint_unsigned;
+       # _char(2) | _char(2) | _char(2) | _char(2) | _char(2) ;
 
 #_table:
 #     A | B | C | BB | CC | B | C | BB | CC | 
@@ -800,14 +798,15 @@ view:
 #    1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | _tinyint_unsigned ;
 
 int_field_name:
-    `pk` | `col_int_key` | `col_int` | `col_int_not_null` | `col_int_not_null_key` ;
+     `col_decimal` | `col_decimal_30_10` | `col_decimal_30_10_not_null` | `col_decimal_not_null_key` | `col_decimal_key` | `col_decimal_40_not_null_key` | `col_decimal_40_key` | `col_decimal_40` | `pk` | `col_int_key` | `col_int` | `col_int_not_null` | `col_int_not_null_key` ;
 
 int_indexed:
     `pk` | `col_int_key` ;
 
 
 char_field_name:
-    `col_varchar_binary_key` | `col_varchar_binary` | `col_varchar_binary_not_null` | `col_varchar_binary_not_null_key` ;
+	int_field_name;
+#    `col_varchar_binary_key` | `col_varchar_binary` | `col_varchar_binary_not_null` | `col_varchar_binary_not_null_key` ;
 
 ################################################################################
 # We define LIMIT_rows in this fashion as LIMIT values can differ depending on      #

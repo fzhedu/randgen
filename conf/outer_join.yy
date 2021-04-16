@@ -41,7 +41,7 @@ query:
   { @nonaggregates = () ; $tables = 0 ; $fields = 0 ;  "" } query_type ;
 
 query_type:
-  simple_select | simple_select | mixed_select | mixed_select | mixed_select | aggregate_select ;
+  aggregate_select | aggregate_select | mixed_select | aggregate_select ;
 
 mixed_select:
         { $stack->push() } SELECT distinct straight_join select_option select_list FROM join WHERE where_list group_by_clause having_clause order_by_clause { $stack->pop(undef) } ;
