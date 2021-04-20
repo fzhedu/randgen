@@ -16,10 +16,10 @@
 # USA
 
 ################################################################################
-# NOTE:  This is an older grammar and should not be prioritized over other 
+# NOTE:  This is an older grammar and should not be prioritized over other
 #        grammars (such as optimizer*subquery, outer_join, range_access)
 #        While this is still an effective testing tool, the grammars listed
-#        above should be run first 
+#        above should be run first
 ################################################################################
 
 query:
@@ -30,7 +30,8 @@ query:
 
 outer_select_item:
 	OUTR . field_name AS X |
-	aggregate_function OUTR . int_field_name ) AS X, non_num_aggregate OUTR . char_field_name ) AS X1, non_num_aggregate OUTR . date_field_name ) AS X2;
+	aggregate_function OUTR . int_field_name ) AS X |
+	non_num_aggregate OUTR . non_num_field_name ) AS X;
 
 aggregate_function:
 	AVG( |
@@ -45,9 +46,6 @@ aggregate_function:
 
 non_num_aggregate:
         COUNT( distinct | count( | MIN( distinct | MAX( distinct | min( | max( ;
-
-aggregate_function_disabled_unpredictable_value:;
-#	GROUP_CONCAT( | ;
 
 outer_from:
 	outer_table_name AS OUTR |
@@ -75,15 +73,11 @@ limit:
 
 select_inner_body:
 	FROM inner_from
-	WHERE inner_condition_top
-	inner_order_by;
+	WHERE inner_condition_top;
 
 select_inner:
 	SELECT select_option inner_select_item
 	select_inner_body;
-
-inner_order_by:;
-#	| ORDER BY INNR . field_name ;
 
 inner_select_item:
 	INNR . int_field_name AS Y ;
@@ -155,14 +149,8 @@ int_field_name:
 num_field_name:
         int_field_name | `col_double` | `col_float` | `col_double_not_null` | `col_float_not_null`;
 
-int_indexed:
-   `pk` | `col_int_key` | `col_decimal_key` | `col_decimal_40_key` | `col_decimal_30_10_key` | `col_tinyint_key` | `col_bigint_key`;
-
 char_field_name:
   `col_varchar_64` | `col_char_64` | `col_varchar_64_not_null`| `col_char_64_not_null` ;
-
-char_indexed:
-  `col_varchar_10_key` | `col_varchar_64_key` ;
 
 date_field_name:
    `col_date` | `col_datetime` | `col_date_not_null` | `col_datetime_not_null` | `col_date_key` | `col_datetime_key`;
@@ -178,5 +166,5 @@ inner_table_name:
 
 value: _digit | _date | _time | _datetime | _varchar(1) | NULL ;
 
-select_option: 
+select_option:
 	| DISTINCT ;
