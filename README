@@ -26,3 +26,14 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; version 2 of the License. Please see the
 LICENSE file for information about licensing and use restrictions of
 this software.
+
+## usage
+
+mkdir randgenTest
+cd randgenTest
+git clone https://github.com/fzhedu/randgen.git
+git checkout mpp
+cp randgen/script-mpp/* ./
+config 目标 zz 和 yy 文件
+config randgen.sh and run.sh
+./randgen.sh
